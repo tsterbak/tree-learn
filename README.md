@@ -5,6 +5,7 @@ Scikit-learn compatible implementation of a huge range of differnet decision tre
 
 <table>
     <tr>
-        <td>Foo</td>
+        <td>Classification</td>
+        <td>Regression</td>
     </tr>
 </table>
