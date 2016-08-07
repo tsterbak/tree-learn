@@ -93,7 +93,7 @@ if __name__ == "__main__":
     X = digits.data
     y = digits.target
     
-    X_train, X_test, y_train, y_test = train_test_split(X,y,train_size=0.9, random_state=2016)
+    X_train, X_test, y_train, y_test = train_test_split(X,y,train_size=0.6, random_state=2016)
     
     t0 = time.time()
     #forest = random_forest(max_depth=4, n_estimators=20).fit(X_train,y_train)

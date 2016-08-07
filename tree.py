@@ -28,10 +28,17 @@ class foggy_decision_tree:
         self.var = var
     
     def fit(self,X,y):
-        self._tree = self.build_tree(X,y)
+        self._tree = self._build_tree(X,y)
         return self
     
-    def predict_one(self, sample, tree):
+    def predict(self,X):
+        y_pred = []
+        for i in range(X.shape[0]):
+            pred = self._predict_one(X[i], self._tree)
+            y_pred.append(pred)
+        return np.array(y_pred)
+    
+    def _predict_one(self, sample, tree):
         if tree.results != None:
             return tree.results
         else:
@@ -48,23 +55,16 @@ class foggy_decision_tree:
                     branch = tree.tb
                 else: 
                     branch = tree.fb
-            return self.predict_one(sample, branch)
+            return self._predict_one(sample, branch)
     
-    def predict(self,X):
-        y_pred = []
-        for i in range(X.shape[0]):
-            pred = self.predict_one(X[i], self._tree)
-            y_pred.append(pred)
-        return np.array(y_pred)
-    
-    def divide_set(self,samples,targets, feature, value):
+    def _divide_set(self,samples,targets, feature, value):
         lower_set = samples[samples[:,feature] > value]
         lower_set_target = targets[samples[:,feature] > value]
         higher_set = samples[samples[:,feature] <= value]
         higher_set_target = targets[samples[:,feature] <= value]
         return lower_set,lower_set_target, higher_set, higher_set_target
     
-    def entropy(self,y):
+    def _entropy(self,y):
         from math import log
         log2 = lambda x:log(x)/log(2)  
         possible_labels = list(set(y))
@@ -74,17 +74,17 @@ class foggy_decision_tree:
             ent = ent-p*log2(p)
         return ent
     
-    def build_tree(self,X,y):
-        current_score = self.entropy(y)
+    def _build_tree(self,X,y):
+        current_score = self._entropy(y)
         best_gain = 0.0
         best_criteria = None
         best_sets = None
         best_labels = None
         for feature in range(0,X.shape[1]):
-            for value in np.unique(X[:,feature]):
-                lower_set,lower_set_target, higher_set, higher_set_target = self.divide_set(X, y, feature, value)
+            for value in np.unique(X[:,feature])[1:len(np.unique(X[:,feature]))-1]:
+                lower_set,lower_set_target, higher_set, higher_set_target = self._divide_set(X, y, feature, value)
                 p = float(lower_set.shape[0])/X.shape[0]
-                gain = current_score - p*self.entropy(lower_set_target) - (1-p)*self.entropy(higher_set_target)
+                gain = current_score - p*self._entropy(lower_set_target) - (1-p)*self._entropy(higher_set_target)
                 if gain > best_gain and lower_set.shape[0] > 0 and higher_set.shape[0] > 0:
                     best_gain = gain
                     best_criteria = (feature,value)
@@ -92,8 +92,8 @@ class foggy_decision_tree:
                     best_labels = (lower_set_target,higher_set_target)
         if best_gain > 0 and self._current_depth < self.max_depth:
             self._current_depth += 1
-            trueBranch = self.build_tree(best_sets[0], best_labels[0])
-            falseBranch = self.build_tree(best_sets[1], best_labels[1])
+            trueBranch = self._build_tree(best_sets[0], best_labels[0])
+            falseBranch = self._build_tree(best_sets[1], best_labels[1])
             return decisionnode(feature=best_criteria[0],value=best_criteria[1],tb=trueBranch,fb=falseBranch)
         else:
             values, counts = np.unique(y,return_counts=True)
@@ -157,7 +157,7 @@ class decision_tree_c45:
         best_sets = None
         best_labels = None
         for feature in range(0,X.shape[1]):
-            for value in np.unique(X[:,feature]):
+            for value in np.unique(X[:,feature])[1:len(np.unique(X[:,feature]))-1]:
                 lower_set,lower_set_target, higher_set, higher_set_target = self._divide_set(X, y, feature, value)
                 p = float(lower_set.shape[0])/X.shape[0]
                 gain = current_score - p*self._entropy(lower_set_target) - (1-p)*self._entropy(higher_set_target)
@@ -195,8 +195,8 @@ if __name__ == "__main__":
     X_train, X_test, y_train, y_test = train_test_split(X,y,train_size=0.66, random_state=2016)
     
     t0 = time.time()
-    tree = decision_tree_c45(max_depth=2).fit(X_train,y_train)
-    #tree = foggy_decision_tree(max_depth=2, var=2).fit(X_train,y_train)
+    #tree = decision_tree_c45(max_depth=2).fit(X_train,y_train)
+    tree = foggy_decision_tree(max_depth=3, var=2).fit(X_train,y_train)
     y_pred = tree.predict(X_test)
     print(y_pred)
     print("Time taken: %0.3f" %(time.time() - t0))
@@ -206,9 +206,10 @@ if __name__ == "__main__":
     print("Score: %0.3f" %score)
     print("")
     
-    # printtree(tree._tree,indent='')
+    printtree(tree._tree,indent='')
+    
     t0 = time.time()
-    sklearn_tree = DecisionTreeClassifier(max_depth=2, random_state=2016).fit(X_train, y_train)
+    sklearn_tree = DecisionTreeClassifier(max_depth=3, random_state=2016).fit(X_train, y_train)
     y_pred = sklearn_tree.predict(X_test)
     print("Time taken: %0.3f" %(time.time() - t0))
     
