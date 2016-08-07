@@ -83,8 +83,8 @@ class foggy_forest:
     def voting(self, predictions):
         def most_freq(x):
             values, counts = np.unique(x,return_counts=True)
-            ind=np.argmax(counts)
-            return values[ind]
+            return values[np.argmax(counts)]
+        
         y_out = [most_freq(x) for x in np.array(predictions).T]
         return np.array(y_out)
 
@@ -93,11 +93,11 @@ if __name__ == "__main__":
     X = digits.data
     y = digits.target
     
-    X_train, X_test, y_train, y_test = train_test_split(X,y,train_size=0.5, random_state=2016)
+    X_train, X_test, y_train, y_test = train_test_split(X,y,train_size=0.9, random_state=2016)
     
     t0 = time.time()
-    forest = random_forest(max_depth=4, n_estimators=20).fit(X_train,y_train)
-    #forest = foggy_forest(max_depth=4, n_estimators=20, var=5).fit(X_train,y_train)
+    #forest = random_forest(max_depth=4, n_estimators=20).fit(X_train,y_train)
+    forest = foggy_forest(max_depth=4, n_estimators=20, var=3).fit(X_train,y_train)
     y_pred = forest.predict(X_test)
     print("Time taken: %0.3f" %(time.time() - t0))
     print(y_pred)
@@ -109,7 +109,7 @@ if __name__ == "__main__":
     
     # printtree(tree._tree,indent='')
     t0 = time.time()
-    sklearn_forest = RandomForestClassifier(max_depth=4, n_estimators=20, random_state=2016).fit(X_train, y_train)
+    sklearn_forest = RandomForestClassifier(criterion="entropy", max_depth=4, n_estimators=20, random_state=2016, max_features=None, min_samples_split=1).fit(X_train, y_train)
     y_pred = sklearn_forest.predict(X_test)
     print("Time taken: %0.3f" %(time.time() - t0))
     print(y_pred)
