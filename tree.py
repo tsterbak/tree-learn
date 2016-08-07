@@ -1,7 +1,7 @@
 '''
 Created on 06.08.2016
 
-@author: Tobias
+@author: Tobias Sterbak: sterbak-it@outlook.com
 '''
 import numpy as np
 from sklearn.cross_validation import train_test_split
@@ -10,7 +10,7 @@ from sklearn.tree.tree import DecisionTreeClassifier
 from sklearn.datasets.base import load_digits
 import time
 
-class decisionnode:
+class decisionnode(object):
     def __init__(self,feature=-1,value=None,results=None,tb=None,fb=None):
         self.feature=feature
         self.value=value
@@ -18,7 +18,7 @@ class decisionnode:
         self.tb=tb
         self.fb=fb
 
-class foggy_decision_tree:
+class foggy_decision_tree(object):
     '''
     C4.5 classification tree with normally distributed splits at prediction time
     '''
@@ -100,7 +100,7 @@ class foggy_decision_tree:
             ind=np.argmax(counts)
             return decisionnode(results=values[ind])
 
-class decision_tree_c45:
+class decision_tree_c45(object):
     '''
     C4.5 classification tree
     '''

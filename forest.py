@@ -1,7 +1,7 @@
 '''
 Created on 07.08.2016
 
-@author: Tobias
+@author: Tobias Sterbak: sterbak-it@outlook.com
 '''
 import numpy as np
 from tree import decision_tree_c45, foggy_decision_tree
@@ -11,7 +11,7 @@ from sklearn.ensemble.forest import RandomForestClassifier
 from sklearn.metrics.classification import accuracy_score
 import time
 
-class random_forest:
+class random_forest(object):
     '''
     standard random forest
     '''
@@ -49,7 +49,7 @@ class random_forest:
         y_out = [most_freq(x) for x in np.array(predictions).T]
         return np.array(y_out)
 
-class foggy_forest:
+class foggy_forest(object):
     '''
     forest of randomized foggy trees
     '''
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     X = digits.data
     y = digits.target
     
-    X_train, X_test, y_train, y_test = train_test_split(X,y,train_size=0.6, random_state=2016)
+    X_train, X_test, y_train, y_test = train_test_split(X,y,train_size=0.7, random_state=2016)
     
     t0 = time.time()
     #forest = random_forest(max_depth=4, n_estimators=20).fit(X_train,y_train)
