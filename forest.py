@@ -91,18 +91,18 @@ class foggy_forest(object):
         return np.array(y_out)
 
 if __name__ == "__main__":
-    digits = load_digits(n_class=3)
+    digits = load_digits(n_class=10)
     X = digits.data
     y = digits.target
     
     X_train, X_test, y_train, y_test = train_test_split(X,y,train_size=0.7, random_state=2016)
     
     t0 = time.time()
-    forest = random_forest(max_depth=4, n_estimators=20, max_features="sqrt").fit(X_train,y_train)
-    #forest = foggy_forest(max_depth=4, n_estimators=20, var=3, max_features="sqrt").fit(X_train,y_train)
+    forest = random_forest(max_depth=5, n_estimators=100, max_features=2).fit(X_train,y_train)
+    #forest = foggy_forest(max_depth=10, n_estimators=20, var=3, max_features=5).fit(X_train,y_train)
     y_pred = forest.predict(X_test)
     print("Time taken: %0.3f" %(time.time() - t0))
-    print(y_pred)
+    #print(y_pred)
     
     print("")
     score = accuracy_score(y_test, y_pred)
@@ -111,10 +111,10 @@ if __name__ == "__main__":
     
     # printtree(tree._tree,indent='')
     t0 = time.time()
-    sklearn_forest = RandomForestClassifier(criterion="entropy", max_depth=4, n_estimators=20, random_state=2016, max_features="sqrt", min_samples_split=1).fit(X_train, y_train)
+    sklearn_forest = RandomForestClassifier(criterion="entropy", max_depth=10, n_estimators=20, random_state=2016, max_features=2, min_samples_split=1).fit(X_train, y_train)
     y_pred = sklearn_forest.predict(X_test)
     print("Time taken: %0.3f" %(time.time() - t0))
-    print(y_pred)
+    #print(y_pred)
     score = accuracy_score(y_test, y_pred)
     print("Score: %0.3f" %score)
     print("")

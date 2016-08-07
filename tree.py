@@ -11,12 +11,13 @@ from sklearn.datasets.base import load_digits
 import time
 
 class decisionnode(object):
-    def __init__(self,feature=-1,value=None,results=None,tb=None,fb=None):
+    def __init__(self,feature=-1,value=None,results=None,tb=None,fb=None,depth=0):
         self.feature=feature
         self.value=value
         self.results=results
         self.tb=tb
         self.fb=fb
+        self.depth=depth
 
 class foggy_decision_tree(object):
     '''
@@ -82,7 +83,7 @@ class foggy_decision_tree(object):
             ent = ent-p*log2(p)
         return ent
     
-    def _build_tree(self,X,y):
+    def _build_tree(self,X,y,current_depth=0):
         current_score = self._entropy(y)
         best_gain = 0.0
         best_criteria = None
@@ -99,11 +100,10 @@ class foggy_decision_tree(object):
                     best_criteria = (feature,value)
                     best_sets = (lower_set,higher_set)
                     best_labels = (lower_set_target,higher_set_target)
-        if best_gain > 0 and self._current_depth < self.max_depth:
-            self._current_depth += 1
-            trueBranch = self._build_tree(best_sets[0], best_labels[0])
-            falseBranch = self._build_tree(best_sets[1], best_labels[1])
-            return decisionnode(feature=best_criteria[0],value=best_criteria[1],tb=trueBranch,fb=falseBranch)
+        if best_gain > 0 and current_depth < self.max_depth:
+            trueBranch = self._build_tree(best_sets[0], best_labels[0], current_depth=current_depth+1)
+            falseBranch = self._build_tree(best_sets[1], best_labels[1], current_depth=current_depth+1)
+            return decisionnode(feature=best_criteria[0], value=best_criteria[1], tb=trueBranch, fb=falseBranch, depth=current_depth)
         else:
             values, counts = np.unique(y,return_counts=True)
             ind=np.argmax(counts)
@@ -166,7 +166,7 @@ class decision_tree_c45(object):
             ent = ent-p*log2(p)
         return ent
     
-    def _build_tree(self,X,y):
+    def _build_tree(self,X,y,current_depth=0):
         current_score = self._entropy(y)
         best_gain = 0.0
         best_criteria = None
@@ -183,21 +183,20 @@ class decision_tree_c45(object):
                     best_criteria = (feature,value)
                     best_sets = (lower_set,higher_set)
                     best_labels = (lower_set_target,higher_set_target)
-        if best_gain > 0 and self._current_depth < self.max_depth:
-            self._current_depth += 1
-            trueBranch = self._build_tree(best_sets[0], best_labels[0])
-            falseBranch = self._build_tree(best_sets[1], best_labels[1])
-            return decisionnode(feature=best_criteria[0],value=best_criteria[1],tb=trueBranch,fb=falseBranch)
+        if best_gain > 0 and current_depth < self.max_depth:
+            trueBranch = self._build_tree(best_sets[0], best_labels[0], current_depth=current_depth+1)
+            falseBranch = self._build_tree(best_sets[1], best_labels[1], current_depth=current_depth+1)
+            return decisionnode(feature=best_criteria[0], value=best_criteria[1], tb=trueBranch, fb=falseBranch, depth=current_depth)
         else:
             values, counts = np.unique(y,return_counts=True)
             ind=np.argmax(counts)
             return decisionnode(results=values[ind])
     
-def printtree(tree, indent=''):
+def printtree(tree, indent='   '):
     if tree.results!=None:
         print(str(tree.results))
     else:
-        print(str(tree.feature)+':'+str(tree.value)+'? ')
+        print(str(tree.depth) +" "+ str(tree.feature)+'>='+str(tree.value)+'? ')
         # Print the branches
         print(indent+'T->', end=" ")
         printtree(tree.tb,indent+'  ')
@@ -205,15 +204,15 @@ def printtree(tree, indent=''):
         printtree(tree.fb,indent+'  ')
 
 if __name__ == "__main__":
-    digits = load_digits(n_class=3)
+    digits = load_digits(n_class=10)
     X = digits.data
     y = digits.target
     
     X_train, X_test, y_train, y_test = train_test_split(X,y,train_size=0.66, random_state=2016)
     
     t0 = time.time()
-    #tree = decision_tree_c45(max_depth=3, max_features="sqrt").fit(X_train,y_train)
-    tree = foggy_decision_tree(max_depth=3, var=2).fit(X_train,y_train)
+    tree = decision_tree_c45(max_depth=10, max_features=2).fit(X_train,y_train)
+    #tree = foggy_decision_tree(max_depth=10, var=2, max_features=2).fit(X_train,y_train)
     y_pred = tree.predict(X_test)
     print(y_pred)
     print("Time taken: %0.3f" %(time.time() - t0))
@@ -223,10 +222,10 @@ if __name__ == "__main__":
     print("Score: %0.3f" %score)
     print("")
     
-    printtree(tree._tree,indent='')
+    # printtree(tree._tree,indent='')
     
     t0 = time.time()
-    sklearn_tree = DecisionTreeClassifier(max_depth=3, random_state=2016).fit(X_train, y_train)
+    sklearn_tree = DecisionTreeClassifier(max_depth=10, random_state=2016, max_features=2).fit(X_train, y_train)
     y_pred = sklearn_tree.predict(X_test)
     print("Time taken: %0.3f" %(time.time() - t0))
     
