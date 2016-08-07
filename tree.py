@@ -22,12 +22,20 @@ class foggy_decision_tree(object):
     '''
     C4.5 classification tree with normally distributed splits at prediction time
     '''
-    def __init__(self, max_depth=4, var=1.0):
+    def __init__(self, max_depth=4, var=1.0, max_features=None):
         self.max_depth = max_depth
         self._current_depth = 0
         self.var = var
+        self.max_features = max_features
     
     def fit(self,X,y):
+        if self.max_features == None:
+            self.max_features = X.shape[1]
+        elif self.max_features == "sqrt":
+            self.max_features = int(np.sqrt(X.shape[1]))
+        elif self.max_features == "log2":
+            self.max_features = int(np.log2(X.shape[1]))
+        
         self._tree = self._build_tree(X,y)
         return self
     
@@ -80,7 +88,8 @@ class foggy_decision_tree(object):
         best_criteria = None
         best_sets = None
         best_labels = None
-        for feature in range(0,X.shape[1]):
+        selected_features = np.random.choice(X.shape[1], self.max_features)
+        for feature in selected_features:
             for value in np.unique(X[:,feature])[1:len(np.unique(X[:,feature]))-1]:
                 lower_set,lower_set_target, higher_set, higher_set_target = self._divide_set(X, y, feature, value)
                 p = float(lower_set.shape[0])/X.shape[0]
@@ -110,6 +119,13 @@ class decision_tree_c45(object):
         self.max_features = max_features
         
     def fit(self,X,y):
+        if self.max_features == None:
+            self.max_features = X.shape[1]
+        elif self.max_features == "sqrt":
+            self.max_features = int(np.sqrt(X.shape[1]))
+        elif self.max_features == "log2":
+            self.max_features = int(np.log2(X.shape[1]))
+            
         self._tree = self._build_tree(X,y)
         return self
     
@@ -156,7 +172,8 @@ class decision_tree_c45(object):
         best_criteria = None
         best_sets = None
         best_labels = None
-        for feature in range(0,X.shape[1]):
+        selected_features = np.random.choice(X.shape[1], self.max_features)
+        for feature in selected_features:
             for value in np.unique(X[:,feature])[1:len(np.unique(X[:,feature]))-1]:
                 lower_set,lower_set_target, higher_set, higher_set_target = self._divide_set(X, y, feature, value)
                 p = float(lower_set.shape[0])/X.shape[0]
@@ -195,7 +212,7 @@ if __name__ == "__main__":
     X_train, X_test, y_train, y_test = train_test_split(X,y,train_size=0.66, random_state=2016)
     
     t0 = time.time()
-    #tree = decision_tree_c45(max_depth=2).fit(X_train,y_train)
+    #tree = decision_tree_c45(max_depth=3, max_features="sqrt").fit(X_train,y_train)
     tree = foggy_decision_tree(max_depth=3, var=2).fit(X_train,y_train)
     y_pred = tree.predict(X_test)
     print(y_pred)
