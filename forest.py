@@ -4,7 +4,7 @@ Created on 07.08.2016
 @author: Tobias
 '''
 import numpy as np
-from C45 import decision_tree_c45, foggy_decision_tree
+from tree import decision_tree_c45, foggy_decision_tree
 from sklearn.datasets.base import load_digits
 from sklearn.cross_validation import train_test_split
 from sklearn.ensemble.forest import RandomForestClassifier
@@ -15,17 +15,17 @@ class random_forest:
     '''
     standard random forest
     '''
-    def __init__(self,n_estimators=10, max_depth=4, bootstrap=True, sample_ratio=1.0, seed=2016):
+    def __init__(self, n_estimators=10, max_depth=4, bootstrap=True, sample_ratio=1.0, seed=2016):
         self.n_estimators = n_estimators
         self.max_depth = max_depth
         self.bootstrap = bootstrap
         self.sample_ratio = sample_ratio
-        self.seed = 2016
+        self.seed = seed
     
     def fit(self,X,y):
         self._trees = []
         np.random.seed(self.seed)
-        for i in range(self.n_estimators):
+        for _ in range(self.n_estimators):
             ind = np.random.choice(X.shape[0], int(X.shape[0]*self.sample_ratio), replace=self.bootstrap)
             X_temp = X[ind,:]
             y_temp = y[ind]
@@ -58,13 +58,13 @@ class foggy_forest:
         self.max_depth = max_depth
         self.bootstrap = bootstrap
         self.sample_ratio = sample_ratio
-        self.seed = 2016
+        self.seed = seed
         self.var = var
     
     def fit(self,X,y):
         self._trees = []
         np.random.seed(self.seed)
-        for i in range(self.n_estimators):
+        for _ in range(self.n_estimators):
             ind = np.random.choice(X.shape[0], int(X.shape[0]*self.sample_ratio), replace=self.bootstrap)
             X_temp = X[ind,:]
             y_temp = y[ind]
@@ -89,7 +89,7 @@ class foggy_forest:
         return np.array(y_out)
 
 if __name__ == "__main__":
-    digits = load_digits(n_class=2)
+    digits = load_digits(n_class=3)
     X = digits.data
     y = digits.target
     
@@ -97,6 +97,7 @@ if __name__ == "__main__":
     
     t0 = time.time()
     forest = random_forest(max_depth=4, n_estimators=20).fit(X_train,y_train)
+    #forest = foggy_forest(max_depth=4, n_estimators=20, var=5).fit(X_train,y_train)
     y_pred = forest.predict(X_test)
     print("Time taken: %0.3f" %(time.time() - t0))
     print(y_pred)

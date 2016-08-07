@@ -4,7 +4,6 @@ Created on 06.08.2016
 @author: Tobias
 '''
 import numpy as np
-from sklearn.datasets import load_iris
 from sklearn.cross_validation import train_test_split
 from sklearn.metrics.classification import accuracy_score
 from sklearn.tree.tree import DecisionTreeClassifier
