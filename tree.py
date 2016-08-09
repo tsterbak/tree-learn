@@ -10,6 +10,8 @@ from sklearn.tree.tree import DecisionTreeClassifier
 from sklearn.datasets.base import load_digits
 import time
 
+from helpers import entropy, divide_set
+
 class decisionnode(object):
     def __init__(self,feature=-1,value=None,results=None,tb=None,fb=None,depth=0):
         self.feature=feature
@@ -36,7 +38,7 @@ class foggy_decision_tree(object):
             self.max_features = int(np.sqrt(X.shape[1]))
         elif self.max_features == "log2":
             self.max_features = int(np.log2(X.shape[1]))
-        
+
         self._tree = self._build_tree(X,y)
         return self
     
@@ -66,25 +68,8 @@ class foggy_decision_tree(object):
                     branch = tree.fb
             return self._predict_one(sample, branch)
     
-    def _divide_set(self,samples,targets, feature, value):
-        lower_set = samples[samples[:,feature] > value]
-        lower_set_target = targets[samples[:,feature] > value]
-        higher_set = samples[samples[:,feature] <= value]
-        higher_set_target = targets[samples[:,feature] <= value]
-        return lower_set,lower_set_target, higher_set, higher_set_target
-    
-    def _entropy(self,y):
-        from math import log
-        log2 = lambda x:log(x)/log(2)  
-        possible_labels = list(set(y))
-        ent=0.0
-        for label in possible_labels:
-            p = float(np.count_nonzero(y == label))/len(y)
-            ent = ent-p*log2(p)
-        return ent
-    
     def _build_tree(self,X,y,current_depth=0):
-        current_score = self._entropy(y)
+        current_score = entropy(y)
         best_gain = 0.0
         best_criteria = None
         best_sets = None
@@ -92,9 +77,9 @@ class foggy_decision_tree(object):
         selected_features = np.random.choice(X.shape[1], self.max_features)
         for feature in selected_features:
             for value in np.unique(X[:,feature])[1:len(np.unique(X[:,feature]))-1]:
-                lower_set,lower_set_target, higher_set, higher_set_target = self._divide_set(X, y, feature, value)
+                lower_set,lower_set_target, higher_set, higher_set_target = divide_set(X, y, feature, value)
                 p = float(lower_set.shape[0])/X.shape[0]
-                gain = current_score - p*self._entropy(lower_set_target) - (1-p)*self._entropy(higher_set_target)
+                gain = current_score - p*entropy(lower_set_target) - (1-p)*entropy(higher_set_target)
                 if gain > best_gain and lower_set.shape[0] > 0 and higher_set.shape[0] > 0:
                     best_gain = gain
                     best_criteria = (feature,value)
@@ -109,13 +94,12 @@ class foggy_decision_tree(object):
             ind=np.argmax(counts)
             return decisionnode(results=values[ind])
 
-class decision_tree_c45(object):
+class simple_tree(object):
     '''
-    C4.5 classification tree
+    simple classification tree
     '''
     def __init__(self, max_depth=4, max_features=None):
         self.max_depth = max_depth
-        self._current_depth = 0
         self.max_features = max_features
         
     def fit(self,X,y):
@@ -125,7 +109,7 @@ class decision_tree_c45(object):
             self.max_features = int(np.sqrt(X.shape[1]))
         elif self.max_features == "log2":
             self.max_features = int(np.log2(X.shape[1]))
-            
+
         self._tree = self._build_tree(X,y)
         return self
     
@@ -149,25 +133,74 @@ class decision_tree_c45(object):
                     branch = tree.fb
             return self._predict_one(sample, branch)
     
-    def _divide_set(self,samples,targets, feature, value):
-        lower_set = samples[samples[:,feature] >= value]
-        lower_set_target = targets[samples[:,feature] >= value]
-        higher_set = samples[samples[:,feature] < value]
-        higher_set_target = targets[samples[:,feature] < value]
-        return lower_set,lower_set_target, higher_set, higher_set_target
+    def _build_tree(self,X,y,current_depth=0):
+        current_score = entropy(y)
+        best_gain = 0.0
+        best_criteria = None
+        best_sets = None
+        best_labels = None
+        selected_features = np.random.choice(X.shape[1], self.max_features)
+        for feature in selected_features:
+            value = (np.max(X[:,feature]) - np.min(X[:,feature]))/2
+            lower_set,lower_set_target, higher_set, higher_set_target = divide_set(X, y, feature, value)
+            p = float(lower_set.shape[0])/X.shape[0]
+            gain = current_score - p*entropy(lower_set_target) - (1-p)*entropy(higher_set_target)
+            if gain > best_gain and lower_set.shape[0] > 0 and higher_set.shape[0] > 0:
+                best_gain = gain
+                best_criteria = (feature,value)
+                best_sets = (lower_set,higher_set)
+                best_labels = (lower_set_target,higher_set_target)
+        if best_gain > 0 and current_depth < self.max_depth:
+            trueBranch = self._build_tree(best_sets[0], best_labels[0], current_depth=current_depth+1)
+            falseBranch = self._build_tree(best_sets[1], best_labels[1], current_depth=current_depth+1)
+            return decisionnode(feature=best_criteria[0], value=best_criteria[1], tb=trueBranch, fb=falseBranch, depth=current_depth)
+        else:
+            values, counts = np.unique(y,return_counts=True)
+            ind=np.argmax(counts)
+            return decisionnode(results=values[ind])
+
+class decision_tree_c45(object):
+    '''
+    C4.5 classification tree
+    '''
+    def __init__(self, max_depth=4, max_features=None):
+        self.max_depth = max_depth
+        self.max_features = max_features
+        
+    def fit(self,X,y):
+        if self.max_features == None:
+            self.max_features = X.shape[1]
+        elif self.max_features == "sqrt":
+            self.max_features = int(np.sqrt(X.shape[1]))
+        elif self.max_features == "log2":
+            self.max_features = int(np.log2(X.shape[1]))
+        
+        self._possible_labels = list(set(y))
+        self._tree = self._build_tree(X,y)
+        return self
     
-    def _entropy(self,y):
-        from math import log
-        log2 = lambda x:log(x)/log(2)  
-        possible_labels = list(set(y))
-        ent=0.0
-        for label in possible_labels:
-            p = float(np.count_nonzero(y == label))/len(y)
-            ent = ent-p*log2(p)
-        return ent
+    def predict(self,X):
+        y_pred = []
+        for i in range(X.shape[0]):
+            pred = self._predict_one(X[i], self._tree)
+            y_pred.append(pred)
+        return np.array(y_pred)
+    
+    def _predict_one(self, sample, tree):
+        if tree.results != None:
+            return tree.results
+        else:
+            v = sample[tree.feature]
+            branch = None
+            if isinstance(v,int) or isinstance(v,float):
+                if v >= tree.value: 
+                    branch = tree.tb
+                else: 
+                    branch = tree.fb
+            return self._predict_one(sample, branch)
     
     def _build_tree(self,X,y,current_depth=0):
-        current_score = self._entropy(y)
+        current_score = entropy(y)
         best_gain = 0.0
         best_criteria = None
         best_sets = None
@@ -175,9 +208,9 @@ class decision_tree_c45(object):
         selected_features = np.random.choice(X.shape[1], self.max_features)
         for feature in selected_features:
             for value in np.unique(X[:,feature])[1:len(np.unique(X[:,feature]))-1]:
-                lower_set,lower_set_target, higher_set, higher_set_target = self._divide_set(X, y, feature, value)
+                lower_set,lower_set_target, higher_set, higher_set_target = divide_set(X, y, feature, value)
                 p = float(lower_set.shape[0])/X.shape[0]
-                gain = current_score - p*self._entropy(lower_set_target) - (1-p)*self._entropy(higher_set_target)
+                gain = current_score - p*entropy(lower_set_target) - (1-p)*entropy(higher_set_target)
                 if gain > best_gain and lower_set.shape[0] > 0 and higher_set.shape[0] > 0:
                     best_gain = gain
                     best_criteria = (feature,value)
@@ -212,9 +245,10 @@ if __name__ == "__main__":
     
     t0 = time.time()
     tree = decision_tree_c45(max_depth=10, max_features=2).fit(X_train,y_train)
+    #tree = simple_tree(max_depth=10, max_features=20).fit(X_train,y_train)
     #tree = foggy_decision_tree(max_depth=10, var=2, max_features=2).fit(X_train,y_train)
     y_pred = tree.predict(X_test)
-    print(y_pred)
+    #print(y_pred)
     print("Time taken: %0.3f" %(time.time() - t0))
     
     print("")

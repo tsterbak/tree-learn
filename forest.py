@@ -4,7 +4,7 @@ Created on 07.08.2016
 @author: Tobias Sterbak: sterbak-it@outlook.com
 '''
 import numpy as np
-from tree import decision_tree_c45, foggy_decision_tree
+from tree import decision_tree_c45, foggy_decision_tree, simple_tree
 from sklearn.datasets.base import load_digits
 from sklearn.cross_validation import train_test_split
 from sklearn.ensemble.forest import RandomForestClassifier
@@ -15,13 +15,14 @@ class random_forest(object):
     '''
     standard random forest
     '''
-    def __init__(self, n_estimators=10, max_depth=4, max_features=None, bootstrap=True, sample_ratio=1.0, seed=2016):
+    def __init__(self, n_estimators=10, max_depth=4, max_features=None, bootstrap=True, sample_ratio=1.0, seed=2016, simple=False):
         self.n_estimators = n_estimators
         self.max_depth = max_depth
         self.max_features = max_features
         self.bootstrap = bootstrap
         self.sample_ratio = sample_ratio
         self.seed = seed
+        self.simple = simple
     
     def fit(self,X,y):
         self._trees = []
@@ -30,7 +31,10 @@ class random_forest(object):
             ind = np.random.choice(X.shape[0], int(X.shape[0]*self.sample_ratio), replace=self.bootstrap)
             X_temp = X[ind,:]
             y_temp = y[ind]
-            tree = decision_tree_c45(max_depth=self.max_depth, max_features=self.max_features).fit(X_temp,y_temp)
+            if self.simple == True:
+                tree = simple_tree(max_depth=self.max_depth, max_features=self.max_features).fit(X_temp,y_temp)
+            else:
+                tree = decision_tree_c45(max_depth=self.max_depth, max_features=self.max_features).fit(X_temp,y_temp)
             self._trees.append(tree)
         return self    
         
@@ -91,30 +95,39 @@ class foggy_forest(object):
         return np.array(y_out)
 
 if __name__ == "__main__":
-    digits = load_digits(n_class=10)
+    digits = load_digits(n_class=5)
     X = digits.data
     y = digits.target
     
     X_train, X_test, y_train, y_test = train_test_split(X,y,train_size=0.7, random_state=2016)
     
+    print("Simple random forest")
     t0 = time.time()
-    forest = random_forest(max_depth=5, n_estimators=100, max_features=2).fit(X_train,y_train)
-    #forest = foggy_forest(max_depth=10, n_estimators=20, var=3, max_features=5).fit(X_train,y_train)
+    forest = random_forest(max_depth=10, n_estimators=50, max_features=20, simple=True).fit(X_train,y_train)
+    #forest = foggy_forest(max_depth=10, n_estimators=20, var=3, max_features=2).fit(X_train,y_train)
     y_pred = forest.predict(X_test)
     print("Time taken: %0.3f" %(time.time() - t0))
-    #print(y_pred)
-    
+    score = accuracy_score(y_test, y_pred)
+    print("Score: %0.3f" %score)
     print("")
+    
+    print("Random forest")
+    t0 = time.time()
+    forest = random_forest(max_depth=10, n_estimators=50, max_features=20, simple=False).fit(X_train,y_train)
+    #forest = foggy_forest(max_depth=10, n_estimators=20, var=3, max_features=2).fit(X_train,y_train)
+    y_pred = forest.predict(X_test)
+    print("Time taken: %0.3f" %(time.time() - t0))
     score = accuracy_score(y_test, y_pred)
     print("Score: %0.3f" %score)
     print("")
     
     # printtree(tree._tree,indent='')
+    
+    print("Sklearn Baseline")
     t0 = time.time()
-    sklearn_forest = RandomForestClassifier(criterion="entropy", max_depth=10, n_estimators=20, random_state=2016, max_features=2, min_samples_split=1).fit(X_train, y_train)
+    sklearn_forest = RandomForestClassifier(criterion="entropy", max_depth=10, n_estimators=50, random_state=2016, max_features=20, min_samples_split=1).fit(X_train, y_train)
     y_pred = sklearn_forest.predict(X_test)
     print("Time taken: %0.3f" %(time.time() - t0))
-    #print(y_pred)
     score = accuracy_score(y_test, y_pred)
     print("Score: %0.3f" %score)
     print("")
