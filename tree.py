@@ -16,6 +16,7 @@ import time
 from helpers import entropy, divide_set
 from sklearn.linear_model.logistic import LogisticRegression
 import warnings
+from sklearn import metrics
 
 class decisionnode(object):
     def __init__(self, feature=-1, value=None, results=None, tb=None, fb=None, depth=0):
@@ -314,28 +315,44 @@ if __name__ == "__main__":
     X = digits.data
     y = digits.target
     
-    X_train, X_test, y_train, y_test = train_test_split(X,y,train_size=0.66, random_state=2016)
+    X_train, X_test, y_train, y_test = train_test_split(X,y,train_size=0.5, random_state=2016)
     
+    print("Tree")
     t0 = time.time()
     #tree = decision_tree_c45(max_depth=10, max_features=2).fit(X_train,y_train)
     #tree = simple_tree(max_depth=10, max_features=20).fit(X_train,y_train)
     #tree = foggy_decision_tree(max_depth=10, var=2, max_features=2).fit(X_train,y_train)
-    tree = logistic_tree(max_depth=10, max_features=20).fit(X_train,y_train)
+    tree = logistic_tree(max_depth=10, max_features=None).fit(X_train,y_train)
     y_pred = tree.predict(X_test)
     print("Time taken: %0.3f" %(time.time() - t0))
-    
-    print("")
     score = accuracy_score(y_test, y_pred)
     print("Score: %0.3f" %score)
+    print("Tree :\n%s\n" % (
+        metrics.classification_report(
+        y_test,
+        y_pred)))
+    # printtree(tree._tree,indent='')
     print("")
     
-    # printtree(tree._tree,indent='')
+    print("Logisitc")
+    logistic = LogisticRegression(penalty='l2', dual=False, tol=0.0001, C=1.0, fit_intercept=True, 
+                                    intercept_scaling=1, class_weight="balanced", random_state=None, solver='liblinear', 
+                                    max_iter=100, multi_class='ovr', verbose=0, warm_start=False, n_jobs=1).fit(X_train,y_train)
+    y_pred = logistic.predict(X_test)
+    print("Time taken: %0.3f" %(time.time() - t0))
+    score = accuracy_score(y_test, y_pred)
+    print("Score: %0.3f" %score)
+    print("Logistic regression :\n%s\n" % (
+        metrics.classification_report(
+        y_test,
+        y_pred)))
+    print("")
     
+    print("Sklearn tree")
     t0 = time.time()
     sklearn_tree = DecisionTreeClassifier(max_depth=10, random_state=2016, max_features=2).fit(X_train, y_train)
     y_pred = sklearn_tree.predict(X_test)
     print("Time taken: %0.3f" %(time.time() - t0))
-    
     score = accuracy_score(y_test, y_pred)
     print("Score: %0.3f" %score)
     print("")
