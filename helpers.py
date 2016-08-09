@@ -3,19 +3,18 @@ Created on 09.08.2016
 
 @author: Tobias
 '''
-from math import log
-import numpy as np
+from numpy import bincount, log2, array
 
 def entropy(y):
     possible_labels = set(y)
-    ent=0.0
+    ent = 0.0
     n = len(y)
-    counts = np.bincount(np.array(y))
+    counts = bincount(array(y))
     for label in possible_labels:
         p = float(counts[label])/n
-        ent = ent - p*np.log2(p)
+        ent = ent - p*log2(p)
     return ent
-
+    
 def divide_set(samples,targets, feature, value):
     lower_index = samples[:,feature] >= value
     lower_set = samples[lower_index]
