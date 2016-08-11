@@ -13,6 +13,7 @@ from sklearn.cross_validation import train_test_split
 from sklearn.ensemble.forest import RandomForestClassifier
 from sklearn.metrics.classification import accuracy_score
 import time
+from sklearn.grid_search import GridSearchCV
 
 class random_forest(object):
     '''
@@ -130,7 +131,7 @@ if __name__ == "__main__":
     
     print("Random forest")
     t0 = time.time()
-    forest = random_forest(max_depth=10, n_estimators=20, max_features=20, treetype="standard").fit(X_train,y_train)
+    forest = random_forest(max_depth=7, n_estimators=20, max_features=20, treetype="standard").fit(X_train,y_train)
     #forest = foggy_forest(max_depth=10, n_estimators=20, var=3, max_features=2).fit(X_train,y_train)
     y_pred = forest.predict(X_test)
     print("Time taken: %0.3f" %(time.time() - t0))
@@ -142,7 +143,7 @@ if __name__ == "__main__":
     
     print("Sklearn Baseline")
     t0 = time.time()
-    sklearn_forest = RandomForestClassifier(criterion="entropy", max_depth=10, n_estimators=20, random_state=2016, max_features=20, min_samples_split=1).fit(X_train, y_train)
+    sklearn_forest = RandomForestClassifier(criterion="entropy", max_depth=8, n_estimators=20, random_state=2016, max_features=20, min_samples_split=1).fit(X_train, y_train)
     y_pred = sklearn_forest.predict(X_test)
     print("Time taken: %0.3f" %(time.time() - t0))
     score = accuracy_score(y_test, y_pred)
