@@ -3,7 +3,7 @@ Created on 09.08.2016
 
 @author: Tobias
 '''
-from numpy import bincount, log2, array, unique, argmax
+from numpy import bincount, log2, array, unique, argmax, mean
 
 # for trees
 def entropy(y):
@@ -33,4 +33,8 @@ def voting(predictions):
         ind = argmax(counts)
         return values[ind]
     y_out = [most_freq(x) for x in array(predictions).T]
+    return array(y_out)
+
+def average(predictions):
+    y_out = [mean(x) for x in array(predictions).T]
     return array(y_out)

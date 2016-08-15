@@ -16,7 +16,6 @@ import time
 from helpers import entropy, divide_set
 from sklearn.linear_model.logistic import LogisticRegression
 import warnings
-from sklearn import metrics
 from sklearn.svm import SVC
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing.data import StandardScaler
@@ -338,7 +337,6 @@ class rbf_tree(object):
                                  ])
                 pipe.fit(X,y)
                 return decisionnode(results=pipe)
-
 
 class decision_tree_c45(object):
     '''
