@@ -4,6 +4,7 @@ Scikit-learn compatible implementation of a huge range of different decision tre
 ### Classification
 - C4.5 Trees: Standard implementation with basic functionality
 - Foggy Trees: normally distributed noise on the splits
+- Rbf Trees
 
 ### Regression
-
+- Regression Trees
